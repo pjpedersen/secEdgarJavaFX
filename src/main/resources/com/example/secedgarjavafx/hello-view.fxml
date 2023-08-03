@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.secedgarjavafx.HelloController">
+   <children>
+      <Label layoutX="120.0" layoutY="37.0" text="Insert tickers into text area and separate with spaces">
+         <font>
+            <Font size="20.0" />
+         </font></Label>
+      <TextArea fx:id="cikInput" layoutX="101.0" layoutY="132.0" prefHeight="168.0" prefWidth="162.0" />
+      <Button layoutX="138.0" layoutY="323.0" mnemonicParsing="false" onAction="#handleIterateTickers" text="Generate CSV" />
+      <Label fx:id="resultGenerated" alignment="CENTER" layoutX="331.0" layoutY="315.0" prefHeight="40.0" prefWidth="258.0" textAlignment="CENTER">
+         <font>
+            <Font size="16.0" />
+         </font></Label>
+      <TextArea fx:id="cikInput1" layoutX="301.0" layoutY="132.0" prefHeight="168.0" prefWidth="317.0" />
+      <Label layoutX="401.0" layoutY="100.0" text="Program Execution">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
+      <Label layoutX="161.0" layoutY="100.0" text="Tickers">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>
