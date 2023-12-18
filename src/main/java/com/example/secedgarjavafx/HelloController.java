@@ -21,6 +21,10 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
+
 public class HelloController {
     @FXML
     private Label welcomeText;
@@ -43,6 +47,7 @@ public class HelloController {
 
     DecimalFormat decimalFormat = new DecimalFormat("#0.00"); // Example: Two decimal places
 
+    NumberFormat nf = NumberFormat.getInstance(Locale.GERMANY); // or Locale.FRANCE
 
 
     //creating File instance to reference text file in Java
@@ -226,7 +231,7 @@ public class HelloController {
     }
 
     @FXML
-    private void handleIterateTickers() throws FileNotFoundException {
+    private void handleIterateTickers() throws IOException {
 
         //Creating Scanner instance to read File in Java
         Scanner scnr = new Scanner(text);
@@ -256,7 +261,8 @@ public class HelloController {
 
 
         // Specify the file path for the CSV file
-        String filePath = "C:\\Users\\X1Y\\Desktop\\secEdgarJavaFX\\src\\main\\resources\\com\\example\\secedgarjavafx\\file.csv";
+        String filePath = "output/file.csv";
+
 
         // Write the CSV content to the file
         try (PrintWriter writer = new PrintWriter(filePath)) {
@@ -381,22 +387,22 @@ public class HelloController {
 
 
                  csvContent.append(ticker+";")
-                        .append(netIncomeLoss+" NET INCOME;")
-                        .append(roa+" ROA;")
-                        .append(roaMinusOne+" ROA-1;")
-                        .append(operatingCashFlow+" OPERATING CASH FLOW;")
-                        .append(operatingCashFlowMinusOne+" OPERATING CASH FLOW-1;")
+                        .append(nf.format(netIncomeLoss)+" NET INCOME;")
+                        .append(roaWithDecimals+" ROA;")
+                        .append(roaMinusOneWithDecimals+" ROA-1;")
+                        .append(nf.format(operatingCashFlow)+" OPERATING CASH FLOW;")
+                        .append(nf.format(operatingCashFlowMinusOne)+" OPERATING CASH FLOW-1;")
                          .append(cashFlowNetIncomeComparison+";")
                          .append(cashFlowNetIncomeComparisonMinusOne+";")
-                         .append(ltdTa+" LTD/TA;")
-                         .append(ltdTaMinusOne+" LTD/TA-1;")
-                         .append(currentRatio+" LATESTRATIO;")
-                         .append(currentRatioMinusOne+" LATESTRATIO-1;")
-                         .append(avgDilutedSharesOutstanding+" AVG DIL. SHARES OUT.;")
-                         .append(avgDilutedSharesOutstandingMinusOne+" AVG DIL. SHARES OUT.-1;")
-                         .append(grossMargin+" GROSS MARGIN;")
-                         .append(grossMarginMinusOne+" GROSS MARGIN-1;")
-                         .append(assetTurnover+" ASSET TURNOVER;")
+                         .append(nf.format(ltdTa)+" LTD/TA;")
+                         .append(nf.format(ltdTaMinusOne)+" LTD/TA-1;")
+                         .append(nf.format(currentRatio)+" LATESTRATIO;")
+                         .append(nf.format(currentRatioMinusOne)+" LATESTRATIO-1;")
+                         .append(nf.format(avgDilutedSharesOutstanding)+" AVG DIL. SHARES OUT.;")
+                         .append(nf.format(avgDilutedSharesOutstandingMinusOne)+" AVG DIL. SHARES OUT.-1;")
+                         .append(nf.format(grossMargin)+" GROSS MARGIN;")
+                         .append(nf.format(grossMarginMinusOne)+" GROSS MARGIN-1;")
+                         .append(nf.format(assetTurnover)+" ASSET TURNOVER;")
 
 
 
