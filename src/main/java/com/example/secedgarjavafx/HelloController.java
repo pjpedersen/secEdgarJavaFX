@@ -456,6 +456,41 @@ public class HelloController {
         double currentRatioMinusOne = calculateRatio(currentAssetsMinusOne, currentLiabilitiesMinusOne);
         double grossMarginMinusOne = calculateRatio(grossProfitMinusOne, salesToCustomersMinusOne);
 
+        int[] fScores = new int[8];
+
+
+        if (roa > roaMinusOne) {
+            fScores[1] = 1;
+        }
+        if (netIncomeLoss > 0) {
+            fScores[0] = 1;
+        }
+        if (operatingCashFlow > 0) {
+            fScores[2] = 1;
+        }
+        if (operatingCashFlow > netIncomeLoss) {
+            fScores[3] = 1;
+        }
+        if (ltdTa < ltdTaMinusOne) {
+            fScores[4] = 1;
+        }
+        if (currentRatio > currentRatioMinusOne) {
+            fScores[5] = 1;
+        }
+        if (avgDilutedSharesOutstanding < avgDilutedSharesOutstandingMinusOne) {
+            fScores[6] = 1;
+        }
+        if (grossMargin > grossMarginMinusOne) {
+            fScores[7] = 1;
+        }
+     /*   if (tot > grossMarginMinusOne) {
+            fScores[8] = 1;
+        }*/
+
+        int finalFScore = 0;
+        for(int i : fScores) {
+            finalFScore += fScores[i];
+        }
         if(netIncomeLoss > assets) {
             cashFlowNetIncomeComparison = "CF Higher than NI";
         }
