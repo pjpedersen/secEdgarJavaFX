@@ -15,12 +15,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -45,9 +46,10 @@ public class HelloController {
 
     HashMap<String, String> cikTickers = new HashMap<String, String>();
 
-    DecimalFormat decimalFormat = new DecimalFormat("#0.00"); // Example: Two decimal places
+    DecimalFormatSymbols dfs = new DecimalFormatSymbols(Locale.US);
+    DecimalFormat decimalFormat = new DecimalFormat("#0.00", dfs); // Example: Two decimal places
 
-    NumberFormat nf = NumberFormat.getInstance(Locale.GERMANY); // or Locale.FRANCE
+    NumberFormat nf = NumberFormat.getInstance(Locale.US); // or Locale.FRANCE
 
 
     //creating File instance to reference text file in Java
@@ -462,42 +464,42 @@ public class HelloController {
         }
 
         if(netIncomeLoss > assets) {
-            cashFlowNetIncomeComparisonMinusOne = "CF Higher than NI";
+            cashFlowNetIncomeComparisonMinusOne = "CF Higher than NI-1";
         }
         else {
-            cashFlowNetIncomeComparisonMinusOne = "CF Not higher than NI";
+            cashFlowNetIncomeComparisonMinusOne = "CF Not higher than NI-1";
         }
 
 
         // Append formatted data to csvContent
         csvContent.append(ticker).append(";")
                 // Current year data
-                .append(nf.format(netIncomeLoss)).append("; NET INCOME;")
-                .append(nf.format(netIncomeLossMinusOne)).append("; NET INCOME-1;")
-                .append(decimalFormat.format(roa)).append("; ROA;")
-                .append(decimalFormat.format(roaMinusOne)).append("; ROA-1;")
-                .append(nf.format(operatingCashFlow)).append("; OPERATING CASH FLOW;")
-                .append(nf.format(operatingCashFlowMinusOne)).append("; OPERATING CASH FLOW-1;")
+                .append(nf.format(netIncomeLoss)).append(" NET INCOME;")
+                .append(nf.format(netIncomeLossMinusOne)).append(" NET INCOME-1;")
+                .append(decimalFormat.format(roa)).append(" ROA;")
+                .append(decimalFormat.format(roaMinusOne)).append(" ROA-1;")
+                .append(nf.format(operatingCashFlow)).append(" OPERATING CASH FLOW;")
+                .append(nf.format(operatingCashFlowMinusOne)).append(" OPERATING CASH FLOW-1;")
                 .append(cashFlowNetIncomeComparison+";")
                 .append(cashFlowNetIncomeComparisonMinusOne+";")
-                .append(nf.format(longTermDebt)).append("; LONG TERM DEBT;")
-                .append(nf.format(longTermDebtMinusOne)).append("; LONG TERM DEBT-1;")
+                .append(nf.format(longTermDebt)).append(" LONG TERM DEBT;")
+                .append(nf.format(longTermDebtMinusOne)).append(" LONG TERM DEBT-1;")
                 .append(nf.format(ltdTa)+" LTD/TA;")
-                .append(nf.format(ltdTaMinusOne)+" LTD/TA;")
-                .append(nf.format(currentAssets)).append("; CURRENT ASSETS;")
-                .append(nf.format(currentAssetsMinusOne)).append("; CURRENT ASSETS-1;")
-                .append(nf.format(currentLiabilities)).append("; CURRENT LIABILITIES;")
-                .append(nf.format(currentLiabilitiesMinusOne)).append("; CURRENT LIABILITIES-1;")
+                .append(nf.format(ltdTaMinusOne)+" LTD/TA-1;")
+                .append(nf.format(currentAssets)).append(" CURRENT ASSETS;")
+                .append(nf.format(currentAssetsMinusOne)).append(" CURRENT ASSETS-1;")
+                .append(nf.format(currentLiabilities)).append(" CURRENT LIABILITIES;")
+                .append(nf.format(currentLiabilitiesMinusOne)).append(" CURRENT LIABILITIES-1;")
                 .append(nf.format(currentRatio)+" LATESTRATIO;")
-                .append(nf.format(currentRatioMinusOne)+" LATESTRATIO;")
-                .append(nf.format(avgDilutedSharesOutstanding)).append("; AVG DIL. SHARES OUT;")
-                .append(nf.format(avgDilutedSharesOutstandingMinusOne)).append("; AVG DIL. SHARES OUT-1;")
-                .append(nf.format(grossProfit)).append("; GROSS PROFIT;")
-                .append(nf.format(grossProfitMinusOne)).append("; GROSS PROFIT-1;")
-                .append(nf.format(salesToCustomers)).append("; SALES TO CUSTOMERS;")
-                .append(nf.format(salesToCustomersMinusOne)).append("; SALES TO CUSTOMERS-1;")
-                .append(decimalFormat.format(grossMargin)).append("; GROSS MARGIN;")
-                .append(decimalFormat.format(grossMarginMinusOne)).append("; GROSS MARGIN-1;")
+                .append(nf.format(currentRatioMinusOne)+" LATESTRATIO-1;")
+                .append(nf.format(avgDilutedSharesOutstanding)).append(" AVG DIL. SHARES OUT;")
+                .append(nf.format(avgDilutedSharesOutstandingMinusOne)).append(" AVG DIL. SHARES OUT-1;")
+                .append(nf.format(grossProfit)).append(" GROSS PROFIT;")
+                .append(nf.format(grossProfitMinusOne)).append(" GROSS PROFIT-1;")
+                .append(nf.format(salesToCustomers)).append(" SALES TO CUSTOMERS;")
+                .append(nf.format(salesToCustomersMinusOne)).append(" SALES TO CUSTOMERS-1;")
+                .append(decimalFormat.format(grossMargin)).append(" GROSS MARGIN;")
+                .append(decimalFormat.format(grossMarginMinusOne)).append(" GROSS MARGIN-1;")
 
                 // Previous year data
                 .append(System.lineSeparator());
