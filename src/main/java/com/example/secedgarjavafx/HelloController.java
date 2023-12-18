@@ -71,6 +71,7 @@ public class HelloController {
             resultGenerated.setText("Avg shares diluted skipped for some entries");
         } catch (IOException e) {
             throw new RuntimeException(e);
+
         }
         try{
 
@@ -225,201 +226,286 @@ public class HelloController {
         return val;
     }
 
+    private long parseLongOrZero(String numberString) throws NumberFormatException {
+        if (numberString == null || numberString.trim().isEmpty()) {
+            throw new NumberFormatException("Empty or null string");
+        }
+        return Long.parseLong(numberString.trim());
+    }
+
+
+
     @FXML
     protected void onHelloButtonClick() {
         welcomeText.setText("Welcome to JavaFX Application!");
     }
 
     @FXML
-    private void handleIterateTickers() throws IOException {
-
-        //Creating Scanner instance to read File in Java
-        Scanner scnr = new Scanner(text);
-
-        // while(scnr.hasNextLine())
-
-        for(int i = 0; i < 12084; i++)  {
-            String lineTemp = scnr.nextLine();
-            String[] lineSplitted = lineTemp.split("\\s+");
-            cikTickers.put(lineSplitted[0], lineSplitted[1]);
-
-        }
+    public void handleIterateTickers() {
+        readTickersFromFile();
 
         String tickers = cikInput.getText();
         String[] tickerArray = tickers.split("\\s+");
 
-        // Create a StringBuilder to build the CSV content
         StringBuilder csvContent = new StringBuilder();
-
-        // Iterate through the tickers
-        for (String ticker : tickerArray) {
-            // Append the ticker to the CSV content
-            cikHolders.add(ticker);
-            System.out.println(ticker);
-        }
-
-
-
-        // Specify the file path for the CSV file
         String filePath = "output/file.csv";
 
-
-        // Write the CSV content to the file
         try (PrintWriter writer = new PrintWriter(filePath)) {
-            String addTheseZeros = "";
-
-             for (String ticker : tickerArray) {
-                // Append the ticker to the CSV content
-                 if(cikTickers.containsKey(ticker)) {
-                     if (ticker.length() <= 10) {
-                         int remainder = 10 - cikTickers.get(ticker).length();
-
-                         for (int i = 0; i < remainder; i++) {
-                             addTheseZeros += "0";
-                         }
-                     }
-                 }
-                 else {
-                     //resultGenerated.setText("ERROR: Ticker not found: " + ticker);
-                     throw new TickerNotFoundException(ticker);
-
-                 }
-
-                String tickerText = addTheseZeros+cikTickers.get(ticker);
-                cikWithData.add(tickerText);
-                System.out.println(ticker);
-                System.out.println(tickerText);
-                long netIncomeLoss = Long.parseLong(returnQueryResult(tickerText, "NetIncomeLoss").trim());
-                long assets = Long.parseLong(returnQueryResult(tickerText, "Assets").trim());
-                System.out.println("Net Income Loss: " + netIncomeLoss);
-                System.out.println("Assets: " + assets);
-                double roaWithDecimals = ((double)netIncomeLoss / assets)*100;
-                String roa = decimalFormat.format(roaWithDecimals);
-                System.out.println("ROA: " + roa);
-                long operatingCashFlow = Long.parseLong(returnQueryResult(tickerText, "NetCashProvidedByUsedInOperatingActivities").trim());
-                String cashFlowNetIncomeComparison = "";
-                long longTermDebt = Long.parseLong(returnQueryResult(tickerText, "LongTermDebtNoncurrent").trim());
-                double ltdTa = (double)longTermDebt/(double)assets;
-                long currentAssets = Long.parseLong(returnQueryResult(tickerText, "AssetsCurrent").trim());
-                long currentLiabilities = Long.parseLong(returnQueryResult(tickerText, "LiabilitiesCurrent").trim());
-                double currentRatio = (double)currentAssets/(double)currentLiabilities;
-                 long avgDilutedSharesOutstanding = 0;
+            for (String ticker : tickerArray) {
                 try {
-                    avgDilutedSharesOutstanding = Long.parseLong(returnQueryResult(tickerText, "WeightedAverageNumberOfDilutedSharesOutstanding").trim());
+                    String tickerText = formatTicker(ticker);
+                    processTickerData(tickerText, csvContent, ticker);
+                } catch (NumberFormatException | TickerNotFoundException e) {
+                    cikInput1.appendText("Skipped processing for entry: " + ticker + " due to " + e.getMessage() + "\n");
                 }
-                catch(NumberFormatException e) {
-                    cikInput1.appendText("Skipped AVG Shares Diluted for entry: "+ticker+"\n");
-
-                }
-
-                long grossProfit = 0;
-
-                 try {
-                     grossProfit = Long.parseLong(returnQueryResult(tickerText, "GrossProfit").trim());
-                 }
-                 catch(NumberFormatException e) {
-                     cikInput1.appendText("Skipped Gross Margin for entry: "+ticker+"\n");
-                 }
-
-               /*  try {
-                     //insert all existing code queries into try-catch blocks to avoid tickers that have no data from edgar
-                 }*/
-
-
-
-
-                long salesToCustomers = Long.parseLong(returnQueryResult(tickerText, "RevenueFromContractWithCustomerExcludingAssessedTax").trim());
-                double grossMargin = ((double)grossProfit/(double)salesToCustomers)*100;
-
-
-
-                 long netIncomeLossMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "NetIncomeLoss"));
-                long assetsMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "Assets"));
-                System.out.println("Net Income Loss-1: " + netIncomeLossMinusOne);
-                System.out.println("Assets-1: " + assetsMinusOne);
-                double roaMinusOneWithDecimals = ((double)netIncomeLossMinusOne/assetsMinusOne)*100;
-                String roaMinusOne = decimalFormat.format(roaMinusOneWithDecimals);
-                System.out.println("roa-1: "+roaMinusOne);
-                long operatingCashFlowMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "NetCashProvidedByUsedInOperatingActivities").trim());
-                String cashFlowNetIncomeComparisonMinusOne = "";
-                long longTermDebtMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "LongTermDebtNoncurrent").trim());
-                double ltdTaMinusOne = (double)longTermDebtMinusOne/(double)assetsMinusOne;
-                long currentAssetsMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "AssetsCurrent").trim());
-                long currentLiabilitiesMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "LiabilitiesCurrent").trim());
-                double currentRatioMinusOne = (double)currentAssetsMinusOne/(double)currentLiabilitiesMinusOne;
-                 long avgDilutedSharesOutstandingMinusOne = 0;
-                 try {
-                     avgDilutedSharesOutstandingMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "WeightedAverageNumberOfDilutedSharesOutstanding").trim());
-                 }
-                 catch(HttpStatusException e) {
-                     cikInput1.appendText("Skipped AVG Shares Diluted for entry: "+ticker+"\n");
-                 }
-
-                 long grossProfitMinusOne= 0;
-
-                 try {
-                     grossProfit = Long.parseLong(returnQueryResultMinusOne(tickerText, "GrossProfit").trim());
-                 }
-                 catch(NumberFormatException e) {
-                     cikInput1.appendText("Skipped Gross Margin for entry: "+ticker+"\n");
-                 }
-
-                 long salesToCustomersMinusOne = Long.parseLong(returnQueryResultMinusOne(tickerText, "RevenueFromContractWithCustomerExcludingAssessedTax").trim());
-                double grossMarginMinusOne = ((double)grossProfitMinusOne/(double)salesToCustomersMinusOne)*100;
-
-
-
-                 if(netIncomeLoss > assets) {
-                    cashFlowNetIncomeComparison = "CF Higher than NI";
-                }
-                else {
-                    cashFlowNetIncomeComparison = "CF Not higher than NI";
-                }
-
-                 if(netIncomeLoss > assets) {
-                     cashFlowNetIncomeComparisonMinusOne = "CF Higher than NI";
-                 }
-                 else {
-                     cashFlowNetIncomeComparisonMinusOne = "CF Not higher than NI";
-                 }
-
-                 double assetTurnover = (double)salesToCustomers/(((double)assets+(double)assetsMinusOne)/2);
-
-
-                 csvContent.append(ticker+";")
-                        .append(nf.format(netIncomeLoss)+" NET INCOME;")
-                        .append(roaWithDecimals+" ROA;")
-                        .append(roaMinusOneWithDecimals+" ROA-1;")
-                        .append(nf.format(operatingCashFlow)+" OPERATING CASH FLOW;")
-                        .append(nf.format(operatingCashFlowMinusOne)+" OPERATING CASH FLOW-1;")
-                         .append(cashFlowNetIncomeComparison+";")
-                         .append(cashFlowNetIncomeComparisonMinusOne+";")
-                         .append(nf.format(ltdTa)+" LTD/TA;")
-                         .append(nf.format(ltdTaMinusOne)+" LTD/TA-1;")
-                         .append(nf.format(currentRatio)+" LATESTRATIO;")
-                         .append(nf.format(currentRatioMinusOne)+" LATESTRATIO-1;")
-                         .append(nf.format(avgDilutedSharesOutstanding)+" AVG DIL. SHARES OUT.;")
-                         .append(nf.format(avgDilutedSharesOutstandingMinusOne)+" AVG DIL. SHARES OUT.-1;")
-                         .append(nf.format(grossMargin)+" GROSS MARGIN;")
-                         .append(nf.format(grossMarginMinusOne)+" GROSS MARGIN-1;")
-                         .append(nf.format(assetTurnover)+" ASSET TURNOVER;")
-
-
-
-
-
-                         .append(System.lineSeparator());
-                addTheseZeros = "";
-
             }
             writer.write(csvContent.toString());
             resultGenerated.setText("CSV Generated");
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-        catch (TickerNotFoundException e) {
-            cikInput1.appendText("ERROR: Ticker not found: " + e.getTicker());
+    }
+
+    private void readTickersFromFile() {
+        try (Scanner scnr = new Scanner(text)) {
+            for (int i = 0; i < 12084; i++) {
+                String line = scnr.nextLine();
+                String[] lineSplitted = line.split("\\s+");
+                cikTickers.put(lineSplitted[0], lineSplitted[1]);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
+
+    private String formatTicker(String ticker) throws TickerNotFoundException {
+        if (!cikTickers.containsKey(ticker)) {
+            throw new TickerNotFoundException(ticker);
+        }
+        String zeros = "0".repeat(10 - cikTickers.get(ticker).length());
+        return zeros + cikTickers.get(ticker);
+    }
+    private void processTickerData(String tickerText, StringBuilder csvContent, String ticker) {
+        ticker = ticker.toUpperCase();
+        long netIncomeLoss = 0, assets = 0, operatingCashFlow = 0, longTermDebt = 0;
+        long currentAssets = 0, currentLiabilities = 0, avgDilutedSharesOutstanding = 0, grossProfit = 0;
+        long salesToCustomers = 0;
+        String cashFlowNetIncomeComparison = "";
+
+
+        long netIncomeLossMinusOne = 0, assetsMinusOne = 0, operatingCashFlowMinusOne = 0, longTermDebtMinusOne = 0;
+        long currentAssetsMinusOne = 0, currentLiabilitiesMinusOne = 0, avgDilutedSharesOutstandingMinusOne = 0, grossProfitMinusOne = 0;
+        long salesToCustomersMinusOne = 0;
+        String cashFlowNetIncomeComparisonMinusOne = "";
+
+
+
+        // Try-catch blocks for current year data
+        try {
+            netIncomeLoss = parseLongOrZero(returnQueryResult(tickerText, "NetIncomeLoss").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing NetIncomeLoss for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            assets = parseLongOrZero(returnQueryResult(tickerText, "Assets").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing Assets for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            operatingCashFlow = parseLongOrZero(returnQueryResult(tickerText, "NetCashProvidedByUsedInOperatingActivities").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing OperatingCashFlow for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            longTermDebt = parseLongOrZero(returnQueryResult(tickerText, "LongTermDebtNoncurrent").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing LongTermDebt for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            currentAssets = parseLongOrZero(returnQueryResult(tickerText, "AssetsCurrent").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing CurrentAssets for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            currentLiabilities = parseLongOrZero(returnQueryResult(tickerText, "LiabilitiesCurrent").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing CurrentLiabilities for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            avgDilutedSharesOutstanding = parseLongOrZero(returnQueryResult(tickerText, "WeightedAverageNumberOfDilutedSharesOutstanding").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing AvgDilutedSharesOutstanding for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            grossProfit = parseLongOrZero(returnQueryResult(tickerText, "GrossProfit").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing GrossProfit for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            salesToCustomers = parseLongOrZero(returnQueryResult(tickerText, "RevenueFromContractWithCustomerExcludingAssessedTax").trim());
+        } catch (NumberFormatException | HttpStatusException e) {
+            cikInput1.appendText("Error parsing SalesToCustomers for " + ticker + "\n");
+        }
+        // Try-catch blocks for previous year data
+
+        try {
+            netIncomeLossMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "NetIncomeLoss").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing NetIncomeLoss for " + ticker + "\n");
+        } catch (
+                HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            assetsMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "Assets").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing Assets for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            operatingCashFlowMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "NetCashProvidedByUsedInOperatingActivities").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing OperatingCashFlow for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            longTermDebtMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "LongTermDebtNoncurrent").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing LongTermDebt for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            currentAssetsMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "AssetsCurrent").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing CurrentAssets for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            currentLiabilitiesMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "LiabilitiesCurrent").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing CurrentLiabilities for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            avgDilutedSharesOutstandingMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "WeightedAverageNumberOfDilutedSharesOutstanding").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing AvgDilutedSharesOutstanding for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            grossProfitMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "GrossProfit").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing GrossProfit for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            salesToCustomersMinusOne = parseLongOrZero(returnQueryResultMinusOne(tickerText, "RevenueFromContractWithCustomerExcludingAssessedTax").trim());
+        } catch (NumberFormatException | HttpStatusException e) {
+            cikInput1.appendText("Error parsing SalesToCustomers for " + ticker + "\n");
+        }
+
+        // Perform calculations for both current year and previous year
+        double roa = calculateRatio(netIncomeLoss, assets);
+        double ltdTa = calculateRatio(longTermDebt, assets);
+        double currentRatio = calculateRatio(currentAssets, currentLiabilities);
+        double grossMargin = calculateRatio(grossProfit, salesToCustomers);
+
+        double roaMinusOne = calculateRatio(netIncomeLossMinusOne, assetsMinusOne);
+        double ltdTaMinusOne = calculateRatio(longTermDebtMinusOne, assetsMinusOne);
+        double currentRatioMinusOne = calculateRatio(currentAssetsMinusOne, currentLiabilitiesMinusOne);
+        double grossMarginMinusOne = calculateRatio(grossProfitMinusOne, salesToCustomersMinusOne);
+
+        if(netIncomeLoss > assets) {
+            cashFlowNetIncomeComparison = "CF Higher than NI";
+        }
+        else {
+            cashFlowNetIncomeComparison = "CF Not higher than NI";
+        }
+
+        if(netIncomeLoss > assets) {
+            cashFlowNetIncomeComparisonMinusOne = "CF Higher than NI";
+        }
+        else {
+            cashFlowNetIncomeComparisonMinusOne = "CF Not higher than NI";
+        }
+
+
+        // Append formatted data to csvContent
+        csvContent.append(ticker).append(";")
+                // Current year data
+                .append(nf.format(netIncomeLoss)).append("; NET INCOME;")
+                .append(nf.format(netIncomeLossMinusOne)).append("; NET INCOME-1;")
+                .append(decimalFormat.format(roa)).append("; ROA;")
+                .append(decimalFormat.format(roaMinusOne)).append("; ROA-1;")
+                .append(nf.format(operatingCashFlow)).append("; OPERATING CASH FLOW;")
+                .append(nf.format(operatingCashFlowMinusOne)).append("; OPERATING CASH FLOW-1;")
+                .append(cashFlowNetIncomeComparison+";")
+                .append(cashFlowNetIncomeComparisonMinusOne+";")
+                .append(nf.format(longTermDebt)).append("; LONG TERM DEBT;")
+                .append(nf.format(longTermDebtMinusOne)).append("; LONG TERM DEBT-1;")
+                .append(nf.format(ltdTa)+" LTD/TA;")
+                .append(nf.format(ltdTaMinusOne)+" LTD/TA;")
+                .append(nf.format(currentAssets)).append("; CURRENT ASSETS;")
+                .append(nf.format(currentAssetsMinusOne)).append("; CURRENT ASSETS-1;")
+                .append(nf.format(currentLiabilities)).append("; CURRENT LIABILITIES;")
+                .append(nf.format(currentLiabilitiesMinusOne)).append("; CURRENT LIABILITIES-1;")
+                .append(nf.format(currentRatio)+" LATESTRATIO;")
+                .append(nf.format(currentRatioMinusOne)+" LATESTRATIO;")
+                .append(nf.format(avgDilutedSharesOutstanding)).append("; AVG DIL. SHARES OUT;")
+                .append(nf.format(avgDilutedSharesOutstandingMinusOne)).append("; AVG DIL. SHARES OUT-1;")
+                .append(nf.format(grossProfit)).append("; GROSS PROFIT;")
+                .append(nf.format(grossProfitMinusOne)).append("; GROSS PROFIT-1;")
+                .append(nf.format(salesToCustomers)).append("; SALES TO CUSTOMERS;")
+                .append(nf.format(salesToCustomersMinusOne)).append("; SALES TO CUSTOMERS-1;")
+                .append(decimalFormat.format(grossMargin)).append("; GROSS MARGIN;")
+                .append(decimalFormat.format(grossMarginMinusOne)).append("; GROSS MARGIN-1;")
+
+                // Previous year data
+                .append(System.lineSeparator());
+    }
+
+    private double calculateRatio(long numerator, long denominator) {
+        return (denominator != 0) ? (double) numerator / denominator * 100 : 0;
+    }
+
+
 }
