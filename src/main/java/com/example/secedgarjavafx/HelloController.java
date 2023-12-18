@@ -55,6 +55,107 @@ public class HelloController {
     //creating File instance to reference text file in Java
     File text = new File("src/main/resources/com/example/secedgarjavafx/ticker.txt");
 
+    public String returnQueryResultMinusTwo(String ticker, String xbrlTag) throws HttpStatusException{
+        String connectString = "https://data.sec.gov/api/xbrl/companyconcept/CIK" + ticker + "/us-gaap/" + xbrlTag + ".json";
+        System.out.println(connectString);
+        String val = "";
+        Document document = null;
+        try {
+            // Connect to the URL and fetch JSON data
+            document = Jsoup.connect(connectString)
+                    .data("query", "Java")
+                    .userAgent("Test-1.0")
+
+                    .timeout(3000)
+                    .ignoreContentType(true)
+                    .get();
+        } catch(HttpStatusException e) {
+            resultGenerated.setText("Avg shares diluted skipped for some entries");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+
+        }
+        try{
+
+            JsonElement jsonElement = JsonParser.parseString(document.text());
+            System.out.println("JSON Response: " + jsonElement);
+
+            // Parse JSON using Gson
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            System.out.println("Parsed JSON Object: " + jsonObject);
+
+            // Get the 'units' object
+            JsonObject units = jsonObject.getAsJsonObject("units");
+            JsonArray usdArray = null;
+
+            // Get the 'USD' array
+            if(units.getAsJsonArray("shares")!=null) {
+                usdArray = units.getAsJsonArray("shares");
+            }
+            else if (units.getAsJsonArray("USD")!=null) {
+                usdArray = units.getAsJsonArray("USD");
+            }
+
+
+
+            System.out.println("USDARRAY PRINTED:"+usdArray);
+            // Find the latest 10-K filing year
+            int latestTenKYearNumeric = 0;
+            int previousYear;
+            for (int i = usdArray.size() - 1; i >= 0; i--) {
+                JsonObject usdObject = usdArray.get(i).getAsJsonObject();
+                String form = usdObject.get("form").getAsString();
+                String fy = usdObject.get("filed").getAsString().substring(0, 4);
+
+                if (form.equals("10-K")) {
+                    latestTenKYearNumeric = Integer.parseInt(fy);
+                    break;
+                }
+            }
+
+
+
+            // Calculate the previous year
+            if(latestTenKYearNumeric < Calendar.getInstance().get(Calendar.YEAR)) {
+                previousYear = latestTenKYearNumeric - 2;
+            }
+            else {
+                previousYear = latestTenKYearNumeric - 3;
+            }
+            System.out.println("TESTUSDARRAY BEFORE LAST LOOP"+usdArray);
+            // Find the corresponding data for the previous year
+            for (int i = usdArray.size() - 1; i >= 0; i--) {
+                JsonObject usdObject = usdArray.get(i).getAsJsonObject();
+                String form = usdObject.get("form").getAsString();
+                String fy = usdObject.get("fy").getAsString().substring(0, 4);
+
+                System.out.println(usdArray.get(i)); // TEST THE OBJECT
+
+                if (form.equals("10-K") && Integer.parseInt(fy) == previousYear) {
+                    String accn = usdObject.get("accn").getAsString();
+                    String filed = usdObject.get("filed").getAsString();
+                    val = usdObject.get("val").getAsString();
+
+                    System.out.println("10-K Filing (Previous Year):");
+                    System.out.println("ACCN: " + accn);
+                    System.out.println("Filed: " + filed);
+                    System.out.println("Value: " + val);
+                    break;
+                }
+
+            }
+        } catch (Exception e) {
+            resultGenerated.setText("Error");
+        }
+
+        if (val.isEmpty()) {
+            // Set a default value or handle it differently
+            val = "0"; // Assuming zero as the default value
+        }
+
+        return val;
+    }
+
     public String returnQueryResultMinusOne(String ticker, String xbrlTag) throws HttpStatusException{
         String connectString = "https://data.sec.gov/api/xbrl/companyconcept/CIK" + ticker + "/us-gaap/" + xbrlTag + ".json";
         System.out.println(connectString);
@@ -176,6 +277,7 @@ public class HelloController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
 
         try{
 
@@ -299,6 +401,8 @@ public class HelloController {
         long currentAssetsMinusOne = 0, currentLiabilitiesMinusOne = 0, avgDilutedSharesOutstandingMinusOne = 0, grossProfitMinusOne = 0;
         long salesToCustomersMinusOne = 0;
         String cashFlowNetIncomeComparisonMinusOne = "";
+
+        long assetsMinusTwo = 0;
 
 
 
@@ -445,6 +549,14 @@ public class HelloController {
             cikInput1.appendText("Error parsing SalesToCustomers for " + ticker + "\n");
         }
 
+        try {
+            assetsMinusTwo = parseLongOrZero(returnQueryResultMinusTwo(tickerText, "Assets").trim());
+        } catch (NumberFormatException e) {
+            cikInput1.appendText("Error parsing Assets for " + ticker + "\n");
+        } catch (HttpStatusException e) {
+            throw new RuntimeException(e);
+        }
+
         // Perform calculations for both current year and previous year
         double roa = calculateRatio(netIncomeLoss, assets);
         double ltdTa = calculateRatio(longTermDebt, assets);
@@ -535,6 +647,9 @@ public class HelloController {
                 .append(nf.format(salesToCustomersMinusOne)).append(" SALES TO CUSTOMERS-1;")
                 .append(decimalFormat.format(grossMargin)).append(" GROSS MARGIN;")
                 .append(decimalFormat.format(grossMarginMinusOne)).append(" GROSS MARGIN-1;")
+                .append(nf.format(assets)).append(" ASSETS;")
+                .append(nf.format(assetsMinusOne)).append(" ASSETS-1;")
+                .append(nf.format(assetsMinusTwo)).append(" ASSETS-2;")
 
                 // Previous year data
                 .append(System.lineSeparator());
